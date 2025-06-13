@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -152,7 +152,8 @@
 
       ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
     }
-        function drawCanvasPreview() {
+
+    function drawCanvasPreview() {
       if (!mainImg || !selfieImg) return;
 
       const layout = layoutSelect.value;
@@ -166,23 +167,17 @@
         const halfH = canvasH / 2;
         drawImageWithCover(ctx, mainImg, 0, 0, canvasW, halfH);
         drawImageWithCover(ctx, selfieImg, 0, halfH, canvasW, halfH);
-      } else if (layout === 'split-vertical') {
-        const halfW = canvasW / 2;
-        drawImageWithCover(ctx, mainImg, 0, 0, halfW, canvasH);
-        drawImageWithCover(ctx, selfieImg, halfW, 0, halfW, canvasH);
-      } else if (layout === 'side-by-side') {
+      } else if (layout === 'split-vertical' || layout === 'side-by-side') {
         const halfW = canvasW / 2;
         drawImageWithCover(ctx, mainImg, 0, 0, halfW, canvasH);
         drawImageWithCover(ctx, selfieImg, halfW, 0, halfW, canvasH);
       } else {
-        // Main image in rounded frame
         const frameX = 37.5, frameY = 50, frameW = 825, frameH = 1100;
         ctx.beginPath();
         ctx.roundRect(frameX, frameY, frameW, frameH, frameRadius);
         ctx.clip();
         drawImageWithCover(ctx, mainImg, frameX, frameY, frameW, frameH);
 
-        // Selfie overlay
         let sx = frameX + frameW - selfieSize - margin;
         let sy = frameY + margin;
         if (layout === 'bottom-left') {
@@ -193,14 +188,12 @@
           sy = frameY + (frameH - selfieSize) / 2;
         }
 
-        // Draw black border
         ctx.save();
         ctx.beginPath();
         ctx.roundRect(sx - 3, sy - 3, selfieSize + 6, selfieSize + 6, 16);
         ctx.fillStyle = "#000";
         ctx.fill();
 
-        // Draw selfie
         ctx.beginPath();
         ctx.roundRect(sx, sy, selfieSize, selfieSize, 12);
         ctx.clip();
@@ -247,59 +240,59 @@
       const highCanvas = document.createElement('canvas');
       highCanvas.width = canvasW * scale;
       highCanvas.height = canvasH * scale;
-      const highCtx = highCanvas.getContext('2d');
+      const ctxH = highCanvas.getContext('2d');
 
-      function drawHighRes() {
+      function drawHighResLayout() {
         const layout = layoutSelect.value;
-        highCtx.fillStyle = "#fff";
-        highCtx.fillRect(0, 0, highCanvas.width, highCanvas.height);
+        ctxH.fillStyle = "#fff";
+        ctxH.fillRect(0, 0, highCanvas.width, highCanvas.height);
 
         if (layout === 'split-horizontal') {
           const halfH = highCanvas.height / 2;
-          drawImageWithCover(highCtx, mainImg, 0, 0, highCanvas.width, halfH);
-          drawImageWithCover(highCtx, selfieImg, 0, halfH, highCanvas.width, halfH);
+          drawImageWithCover(ctxH, mainImg, 0, 0, highCanvas.width, halfH);
+          drawImageWithCover(ctxH, selfieImg, 0, halfH, highCanvas.width, halfH);
         } else if (layout === 'split-vertical' || layout === 'side-by-side') {
           const halfW = highCanvas.width / 2;
-          drawImageWithCover(highCtx, mainImg, 0, 0, halfW, highCanvas.height);
-          drawImageWithCover(highCtx, selfieImg, halfW, 0, halfW, highCanvas.height);
+          drawImageWithCover(ctxH, mainImg, 0, 0, halfW, highCanvas.height);
+          drawImageWithCover(ctxH, selfieImg, halfW, 0, halfW, highCanvas.height);
         } else {
-          const frameX = 37.5 * scale, frameY = 50 * scale;
-          const frameW = 825 * scale, frameH = 1100 * scale;
-          const radius = frameRadius * scale;
+          const fx = 37.5 * scale, fy = 50 * scale;
+          const fw = 825 * scale, fh = 1100 * scale;
+          const r = frameRadius * scale;
           const sSize = selfieSize * scale;
           const m = margin * scale;
 
-          highCtx.save();
-          highCtx.beginPath();
-          highCtx.roundRect(frameX, frameY, frameW, frameH, radius);
-          highCtx.clip();
-          drawImageWithCover(highCtx, mainImg, frameX, frameY, frameW, frameH);
+          ctxH.save();
+          ctxH.beginPath();
+          ctxH.roundRect(fx, fy, fw, fh, r);
+          ctxH.clip();
+          drawImageWithCover(ctxH, mainImg, fx, fy, fw, fh);
 
-          let sx = frameX + frameW - sSize - m;
-          let sy = frameY + m;
+          let sx = fx + fw - sSize - m;
+          let sy = fy + m;
           if (layout === 'bottom-left') {
-            sx = frameX + m;
-            sy = frameY + frameH - sSize - m;
+            sx = fx + m;
+            sy = fy + fh - sSize - m;
           } else if (layout === 'center-overlay') {
-            sx = frameX + (frameW - sSize) / 2;
-            sy = frameY + (frameH - sSize) / 2;
+            sx = fx + (fw - sSize) / 2;
+            sy = fy + (fh - sSize) / 2;
           }
 
-          highCtx.save();
-          highCtx.beginPath();
-          highCtx.roundRect(sx - 6, sy - 6, sSize + 12, sSize + 12, 24);
-          highCtx.fillStyle = "#000";
-          highCtx.fill();
+          ctxH.save();
+          ctxH.beginPath();
+          ctxH.roundRect(sx - 6, sy - 6, sSize + 12, sSize + 12, 24);
+          ctxH.fillStyle = "#000";
+          ctxH.fill();
 
-          highCtx.beginPath();
-          highCtx.roundRect(sx, sy, sSize, sSize, 24);
-          highCtx.clip();
-          drawImageWithCover(highCtx, selfieImg, sx, sy, sSize, sSize);
-          highCtx.restore();
+          ctxH.beginPath();
+          ctxH.roundRect(sx, sy, sSize, sSize, 24);
+          ctxH.clip();
+          drawImageWithCover(ctxH, selfieImg, sx, sy, sSize, sSize);
+          ctxH.restore();
         }
       }
 
-      drawHighRes();
+      drawHighResLayout();
       const link = document.createElement('a');
       link.download = 'viareal-moment.png';
       link.href = highCanvas.toDataURL('image/png');
