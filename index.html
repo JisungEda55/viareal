@@ -3,68 +3,116 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ViaReal</title>
+  <title>ViaReal - Material Style</title>
   <style>
+    :root {
+      --primary: #6200ee;
+      --on-primary: #ffffff;
+      --surface: #ffffff;
+      --on-surface: #222;
+      --shadow: rgba(0, 0, 0, 0.15);
+    }
+
     body {
-      font-family: sans-serif;
-      background: #f0f0f0;
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f5f5;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px 20px;
+      padding: 2rem 1rem;
     }
 
     h1 {
-      color: #333;
+      color: var(--on-surface);
+      margin-bottom: 1rem;
+      font-weight: 500;
     }
 
-    canvas {
-      margin-top: 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    .card {
+      background-color: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 4px 16px var(--shadow);
+      padding: 24px;
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .upload-group {
-      margin-top: 20px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 16px;
+      margin-bottom: 16px;
+      width: 100%;
+    }
+
+    label {
+      font-size: 14px;
+      color: #555;
     }
 
     input[type="file"] {
+      margin-top: 4px;
       font-size: 14px;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      width: 100%;
+    }
+
+    canvas {
+      margin: 16px 0;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 375px;
+      height: auto;
     }
 
     button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
+      background-color: var(--primary);
+      color: var(--on-primary);
       border: none;
-      background-color: #007bff;
-      color: white;
-      border-radius: 6px;
+      border-radius: 24px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 500;
       cursor: pointer;
+      transition: background-color 0.2s ease;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #5300d6;
     }
 
     button:disabled {
-      background-color: #aaa;
+      background-color: #c3b8f0;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
-  <h1>My BeReal Moment</h1>
-
-  <div class="upload-group">
-    <label>Main Photo (Back Camera): <input type="file" id="mainPhoto" accept="image/*"/></label>
-    <label>Lana's Photo (Front Camera): <input type="file" id="selfiePhoto" accept="image/*"/></label>
+  <h1>My ViaReal Moment</h1>
+  <div class="card">
+    <div class="upload-group">
+      <label>Main Photo (Back Camera)
+        <input type="file" id="mainPhoto" accept="image/*">
+      </label>
+      <label>Lana's Photo (Front Camera)
+        <input type="file" id="selfiePhoto" accept="image/*">
+      </label>
+    </div>
+    <canvas id="viarealCanvas" width="900" height="1200"></canvas>
+    <button id="downloadBtn" disabled>Download PNG (High Quality)</button>
   </div>
 
-  <canvas id="berealCanvas" width="1200" height="900"></canvas>
-  <button id="downloadBtn" disabled>Download PNG (High-Quality)</button>
-
   <script>
-    const canvas = document.getElementById('berealCanvas');
+    const canvas = document.getElementById('viarealCanvas');
     const ctx = canvas.getContext('2d');
     const mainInput = document.getElementById('mainPhoto');
     const selfieInput = document.getElementById('selfiePhoto');
@@ -73,8 +121,8 @@
     let mainImg = null;
     let selfieImg = null;
 
-    const frameX = 50, frameY = 37.5, frameWidth = 1100, frameHeight = 825;
-    const frameRadius = 16, selfieSize = 180, margin = 25;
+    const frameX = 37.5, frameY = 50, frameWidth = 825, frameHeight = 1100;
+    const frameRadius = 16, selfieSize = 184, margin = 25;
 
     function drawCanvasPreview() {
       if (!mainImg || !selfieImg) return;
@@ -92,12 +140,21 @@
       const selfieX = frameX + frameWidth - selfieSize - margin;
       const selfieY = frameY + margin;
 
+      // 검정 테두리
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(selfieX - 3, selfieY - 3, selfieSize + 6, selfieSize + 6, 16);
+      ctx.fillStyle = "#000000";
+      ctx.fill();
+
+      // 셀카 이미지
       ctx.beginPath();
       ctx.roundRect(selfieX, selfieY, selfieSize, selfieSize, 12);
       ctx.clip();
       ctx.drawImage(selfieImg, selfieX, selfieY, selfieSize, selfieSize);
       ctx.restore();
 
+      ctx.restore();
       downloadBtn.disabled = false;
     }
 
@@ -134,11 +191,10 @@
     downloadBtn.addEventListener('click', () => {
       if (!mainImg || !selfieImg) return;
 
-      // 🖼 고해상도 캔버스 생성
-      const highCanvas = document.createElement('canvas');
       const scale = 2;
-      highCanvas.width = 1200 * scale;
-      highCanvas.height = 900 * scale;
+      const highCanvas = document.createElement('canvas');
+      highCanvas.width = 900 * scale;
+      highCanvas.height = 1200 * scale;
       const highCtx = highCanvas.getContext('2d');
 
       const fx = frameX * scale;
@@ -151,7 +207,6 @@
       const sx = fx + fw - sSize - sMargin;
       const sy = fy + sMargin;
 
-      // 배경 + 프레임
       highCtx.fillStyle = "#ffffff";
       highCtx.fillRect(0, 0, highCanvas.width, highCanvas.height);
 
@@ -161,6 +216,13 @@
       highCtx.clip();
       highCtx.drawImage(mainImg, fx, fy, fw, fh);
 
+      // 검정 테두리
+      highCtx.save();
+      highCtx.beginPath();
+      highCtx.roundRect(sx - 6, sy - 6, sSize + 12, sSize + 12, 24);
+      highCtx.fillStyle = "#000000";
+      highCtx.fill();
+
       highCtx.beginPath();
       highCtx.roundRect(sx, sy, sSize, sSize, 24);
       highCtx.clip();
@@ -168,12 +230,11 @@
       highCtx.restore();
 
       const link = document.createElement('a');
-      link.download = 'my-bereal-moment.png';
+      link.download = 'viareal-moment.png';
       link.href = highCanvas.toDataURL('image/png');
       link.click();
     });
 
-    // Rounded rectangle support
     CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
       if (w < 2 * r) r = w / 2;
       if (h < 2 * r) r = h / 2;
@@ -185,7 +246,7 @@
       this.arcTo(x, y, x + w, y, r);
       this.closePath();
       return this;
-    }
+    };
   </script>
 </body>
 </html>
