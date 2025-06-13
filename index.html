@@ -1,174 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ViaReal - Material Style</title>
-  <style>
-    :root {
-      --primary: #6200ee;
-      --on-primary: #ffffff;
-      --surface: #ffffff;
-      --on-surface: #222;
-      --shadow: rgba(0, 0, 0, 0.15);
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Roboto', sans-serif;
-      background-color: #f5f5f5;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem 1rem;
-    }
-
-    h1 {
-      color: var(--on-surface);
-      margin-bottom: 1rem;
-      font-weight: 500;
-    }
-
-    .card {
-      background-color: var(--surface);
-      border-radius: 16px;
-      box-shadow: 0 4px 16px var(--shadow);
-      padding: 24px;
-      width: 100%;
-      max-width: 500px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .upload-group {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 16px;
-      width: 100%;
-    }
-
-    label {
-      font-size: 14px;
-      color: #555;
-    }
-
-    input[type="file"] {
-      margin-top: 4px;
-      font-size: 14px;
-      padding: 6px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      width: 100%;
-    }
-
-    canvas {
-      margin: 16px 0;
-      border-radius: 12px;
-      background: white;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-      width: 100%;
-      max-width: 375px;
-      height: auto;
-    }
-
-    button {
-      background-color: var(--primary);
-      color: var(--on-primary);
-      border: none;
-      border-radius: 24px;
-      padding: 12px 24px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    button:hover:not(:disabled) {
-      background-color: #5300d6;
-    }
-
-    button:disabled {
-      background-color: #c3b8f0;
-      cursor: not-allowed;
-    }
-  </style>
-</head>
-<body>
-  <h1>My ViaReal Moment</h1>
-  <div class="card">
-    <div class="upload-group">
-      <label>Main Photo (Back Camera)
-        <input type="file" id="mainPhoto" accept="image/*">
-      </label>
-      <label>Lana's Photo (Front Camera)
-        <input type="file" id="selfiePhoto" accept="image/*">
-      </label>
-    </div>
-    <canvas id="viarealCanvas" width="900" height="1200"></canvas>
-    <button id="downloadBtn" disabled>Download PNG (High Quality)</button>
-  </div>
-
-  <script>
-    const canvas = document.getElementById('viarealCanvas');
-    const ctx = canvas.getContext('2d');
-    const mainInput = document.getElementById('mainPhoto');
-    const selfieInput = document.getElementById('selfiePhoto');
-    const downloadBtn = document.getElementById('downloadBtn');
-
-    let mainImg = null;
-    let selfieImg = null;
-
-    const frameX = 37.5, frameY = 50, frameWidth = 825, frameHeight = 1100;
-    const frameRadius = 16, selfieSize = 220, margin = 25;
-
-    function drawImageWithCover(ctx, img, dx, dy, dw, dh) {
-      const ir = img.width / img.height;
-      const fr = dw / dh;
-      let sx = 0, sy = 0, sw = img.width, sh = img.height;
-
-      if (ir > fr) {
-        sw = sh * fr;
-        sx = (img.width - sw) / 2;
-      } else {
-        sh = sw / fr;
-        sy = (img.height - sh) / 2;
-      }
-
-      ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
-    }
-
     function drawCanvasPreview() {
       if (!mainImg || !selfieImg) return;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const layout = layoutSelect.value;
+      ctx.clearRect(0, 0, canvasW, canvasH);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvasW, canvasH);
 
       ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(frameX, frameY, frameWidth, frameHeight, frameRadius);
-      ctx.clip();
-      drawImageWithCover(ctx, mainImg, frameX, frameY, frameWidth, frameHeight);
 
-      const selfieX = frameX + frameWidth - selfieSize - margin;
-      const selfieY = frameY + margin;
+      if (layout === 'split-horizontal') {
+        const halfH = canvasH / 2;
+        drawImageWithCover(ctx, mainImg, 0, 0, canvasW, halfH);
+        drawImageWithCover(ctx, selfieImg, 0, halfH, canvasW, halfH);
+      } else if (layout === 'split-vertical') {
+        const halfW = canvasW / 2;
+        drawImageWithCover(ctx, mainImg, 0, 0, halfW, canvasH);
+        drawImageWithCover(ctx, selfieImg, halfW, 0, halfW, canvasH);
+      } else if (layout === 'side-by-side') {
+        const halfW = canvasW / 2;
+        drawImageWithCover(ctx, mainImg, 0, 0, halfW, canvasH);
+        drawImageWithCover(ctx, selfieImg, halfW, 0, halfW, canvasH);
+      } else {
+        // Main image in rounded frame
+        const frameX = 37.5, frameY = 50, frameW = 825, frameH = 1100;
+        ctx.beginPath();
+        ctx.roundRect(frameX, frameY, frameW, frameH, frameRadius);
+        ctx.clip();
+        drawImageWithCover(ctx, mainImg, frameX, frameY, frameW, frameH);
 
-      // 검정 테두리
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(selfieX - 3, selfieY - 3, selfieSize + 6, selfieSize + 6, 16);
-      ctx.fillStyle = "#000000";
-      ctx.fill();
+        // Selfie overlay
+        let sx = frameX + frameW - selfieSize - margin;
+        let sy = frameY + margin;
+        if (layout === 'bottom-left') {
+          sx = frameX + margin;
+          sy = frameY + frameH - selfieSize - margin;
+        } else if (layout === 'center-overlay') {
+          sx = frameX + (frameW - selfieSize) / 2;
+          sy = frameY + (frameH - selfieSize) / 2;
+        }
 
-      // 셀카 이미지
-      ctx.beginPath();
-      ctx.roundRect(selfieX, selfieY, selfieSize, selfieSize, 12);
-      ctx.clip();
-      drawImageWithCover(ctx, selfieImg, selfieX, selfieY, selfieSize, selfieSize);
-      ctx.restore();
+        // Draw black border
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(sx - 3, sy - 3, selfieSize + 6, selfieSize + 6, 16);
+        ctx.fillStyle = "#000";
+        ctx.fill();
+
+        // Draw selfie
+        ctx.beginPath();
+        ctx.roundRect(sx, sy, selfieSize, selfieSize, 12);
+        ctx.clip();
+        drawImageWithCover(ctx, selfieImg, sx, sy, selfieSize, selfieSize);
+        ctx.restore();
+      }
 
       ctx.restore();
       downloadBtn.disabled = false;
@@ -185,9 +69,8 @@
     }
 
     mainInput.addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (file) {
-        loadImage(file, img => {
+      if (e.target.files[0]) {
+        loadImage(e.target.files[0], img => {
           mainImg = img;
           drawCanvasPreview();
         });
@@ -195,56 +78,74 @@
     });
 
     selfieInput.addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (file) {
-        loadImage(file, img => {
+      if (e.target.files[0]) {
+        loadImage(e.target.files[0], img => {
           selfieImg = img;
           drawCanvasPreview();
         });
       }
     });
 
-    downloadBtn.addEventListener('click', () => {
-      if (!mainImg || !selfieImg) return;
+    layoutSelect.addEventListener('change', drawCanvasPreview);
 
+    downloadBtn.addEventListener('click', () => {
       const scale = 2;
       const highCanvas = document.createElement('canvas');
-      highCanvas.width = 900 * scale;
-      highCanvas.height = 1200 * scale;
+      highCanvas.width = canvasW * scale;
+      highCanvas.height = canvasH * scale;
       const highCtx = highCanvas.getContext('2d');
 
-      const fx = frameX * scale;
-      const fy = frameY * scale;
-      const fw = frameWidth * scale;
-      const fh = frameHeight * scale;
-      const radius = frameRadius * scale;
-      const sSize = selfieSize * scale;
-      const sMargin = margin * scale;
-      const sx = fx + fw - sSize - sMargin;
-      const sy = fy + sMargin;
+      function drawHighRes() {
+        const layout = layoutSelect.value;
+        highCtx.fillStyle = "#fff";
+        highCtx.fillRect(0, 0, highCanvas.width, highCanvas.height);
 
-      highCtx.fillStyle = "#ffffff";
-      highCtx.fillRect(0, 0, highCanvas.width, highCanvas.height);
+        if (layout === 'split-horizontal') {
+          const halfH = highCanvas.height / 2;
+          drawImageWithCover(highCtx, mainImg, 0, 0, highCanvas.width, halfH);
+          drawImageWithCover(highCtx, selfieImg, 0, halfH, highCanvas.width, halfH);
+        } else if (layout === 'split-vertical' || layout === 'side-by-side') {
+          const halfW = highCanvas.width / 2;
+          drawImageWithCover(highCtx, mainImg, 0, 0, halfW, highCanvas.height);
+          drawImageWithCover(highCtx, selfieImg, halfW, 0, halfW, highCanvas.height);
+        } else {
+          const frameX = 37.5 * scale, frameY = 50 * scale;
+          const frameW = 825 * scale, frameH = 1100 * scale;
+          const radius = frameRadius * scale;
+          const sSize = selfieSize * scale;
+          const m = margin * scale;
 
-      highCtx.save();
-      highCtx.beginPath();
-      highCtx.roundRect(fx, fy, fw, fh, radius);
-      highCtx.clip();
-      drawImageWithCover(highCtx, mainImg, fx, fy, fw, fh);
+          highCtx.save();
+          highCtx.beginPath();
+          highCtx.roundRect(frameX, frameY, frameW, frameH, radius);
+          highCtx.clip();
+          drawImageWithCover(highCtx, mainImg, frameX, frameY, frameW, frameH);
 
-      // 검정 테두리
-      highCtx.save();
-      highCtx.beginPath();
-      highCtx.roundRect(sx - 6, sy - 6, sSize + 12, sSize + 12, 24);
-      highCtx.fillStyle = "#000000";
-      highCtx.fill();
+          let sx = frameX + frameW - sSize - m;
+          let sy = frameY + m;
+          if (layout === 'bottom-left') {
+            sx = frameX + m;
+            sy = frameY + frameH - sSize - m;
+          } else if (layout === 'center-overlay') {
+            sx = frameX + (frameW - sSize) / 2;
+            sy = frameY + (frameH - sSize) / 2;
+          }
 
-      highCtx.beginPath();
-      highCtx.roundRect(sx, sy, sSize, sSize, 24);
-      highCtx.clip();
-      drawImageWithCover(highCtx, selfieImg, sx, sy, sSize, sSize);
-      highCtx.restore();
+          highCtx.save();
+          highCtx.beginPath();
+          highCtx.roundRect(sx - 6, sy - 6, sSize + 12, sSize + 12, 24);
+          highCtx.fillStyle = "#000";
+          highCtx.fill();
 
+          highCtx.beginPath();
+          highCtx.roundRect(sx, sy, sSize, sSize, 24);
+          highCtx.clip();
+          drawImageWithCover(highCtx, selfieImg, sx, sy, sSize, sSize);
+          highCtx.restore();
+        }
+      }
+
+      drawHighRes();
       const link = document.createElement('a');
       link.download = 'viareal-moment.png';
       link.href = highCanvas.toDataURL('image/png');
