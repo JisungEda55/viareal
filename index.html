@@ -122,7 +122,23 @@
     let selfieImg = null;
 
     const frameX = 37.5, frameY = 50, frameWidth = 825, frameHeight = 1100;
-    const frameRadius = 16, selfieSize = 184, margin = 25;
+    const frameRadius = 16, selfieSize = 220, margin = 25;
+
+    function drawImageWithCover(ctx, img, dx, dy, dw, dh) {
+      const ir = img.width / img.height;
+      const fr = dw / dh;
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+
+      if (ir > fr) {
+        sw = sh * fr;
+        sx = (img.width - sw) / 2;
+      } else {
+        sh = sw / fr;
+        sy = (img.height - sh) / 2;
+      }
+
+      ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
 
     function drawCanvasPreview() {
       if (!mainImg || !selfieImg) return;
@@ -135,7 +151,7 @@
       ctx.beginPath();
       ctx.roundRect(frameX, frameY, frameWidth, frameHeight, frameRadius);
       ctx.clip();
-      ctx.drawImage(mainImg, frameX, frameY, frameWidth, frameHeight);
+      drawImageWithCover(ctx, mainImg, frameX, frameY, frameWidth, frameHeight);
 
       const selfieX = frameX + frameWidth - selfieSize - margin;
       const selfieY = frameY + margin;
@@ -151,7 +167,7 @@
       ctx.beginPath();
       ctx.roundRect(selfieX, selfieY, selfieSize, selfieSize, 12);
       ctx.clip();
-      ctx.drawImage(selfieImg, selfieX, selfieY, selfieSize, selfieSize);
+      drawImageWithCover(ctx, selfieImg, selfieX, selfieY, selfieSize, selfieSize);
       ctx.restore();
 
       ctx.restore();
@@ -214,7 +230,7 @@
       highCtx.beginPath();
       highCtx.roundRect(fx, fy, fw, fh, radius);
       highCtx.clip();
-      highCtx.drawImage(mainImg, fx, fy, fw, fh);
+      drawImageWithCover(highCtx, mainImg, fx, fy, fw, fh);
 
       // 검정 테두리
       highCtx.save();
@@ -226,7 +242,7 @@
       highCtx.beginPath();
       highCtx.roundRect(sx, sy, sSize, sSize, 24);
       highCtx.clip();
-      highCtx.drawImage(selfieImg, sx, sy, sSize, sSize);
+      drawImageWithCover(highCtx, selfieImg, sx, sy, sSize, sSize);
       highCtx.restore();
 
       const link = document.createElement('a');
