@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ViaReal</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    canvas {
+      margin-top: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .upload-group {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    input[type="file"] {
+      font-size: 14px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <h1>My BeReal Moment</h1>
+
+  <div class="upload-group">
+    <label>Main Photo (Back Camera): <input type="file" id="mainPhoto" accept="image/*"/></label>
+    <label>Lana's Photo (Front Camera): <input type="file" id="selfiePhoto" accept="image/*"/></label>
+  </div>
+
+  <canvas id="berealCanvas" width="1200" height="900"></canvas>
+  <button id="downloadBtn" disabled>Download PNG (High-Quality)</button>
+
+  <script>
+    const canvas = document.getElementById('berealCanvas');
+    const ctx = canvas.getContext('2d');
+    const mainInput = document.getElementById('mainPhoto');
+    const selfieInput = document.getElementById('selfiePhoto');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let mainImg = null;
+    let selfieImg = null;
+
+    const frameX = 50, frameY = 37.5, frameWidth = 1100, frameHeight = 825;
+    const frameRadius = 16, selfieSize = 180, margin = 25;
+
+    function drawCanvasPreview() {
+      if (!mainImg || !selfieImg) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(frameX, frameY, frameWidth, frameHeight, frameRadius);
+      ctx.clip();
+      ctx.drawImage(mainImg, frameX, frameY, frameWidth, frameHeight);
+
+      const selfieX = frameX + frameWidth - selfieSize - margin;
+      const selfieY = frameY + margin;
+
+      ctx.beginPath();
+      ctx.roundRect(selfieX, selfieY, selfieSize, selfieSize, 12);
+      ctx.clip();
+      ctx.drawImage(selfieImg, selfieX, selfieY, selfieSize, selfieSize);
+      ctx.restore();
+
+      downloadBtn.disabled = false;
+    }
+
+    function loadImage(file, callback) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = () => callback(img);
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    mainInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) {
+        loadImage(file, img => {
+          mainImg = img;
+          drawCanvasPreview();
+        });
+      }
+    });
+
+    selfieInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) {
+        loadImage(file, img => {
+          selfieImg = img;
+          drawCanvasPreview();
+        });
+      }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!mainImg || !selfieImg) return;
+
+      // 🖼 고해상도 캔버스 생성
+      const highCanvas = document.createElement('canvas');
+      const scale = 2;
+      highCanvas.width = 1200 * scale;
+      highCanvas.height = 900 * scale;
+      const highCtx = highCanvas.getContext('2d');
+
+      const fx = frameX * scale;
+      const fy = frameY * scale;
+      const fw = frameWidth * scale;
+      const fh = frameHeight * scale;
+      const radius = frameRadius * scale;
+      const sSize = selfieSize * scale;
+      const sMargin = margin * scale;
+      const sx = fx + fw - sSize - sMargin;
+      const sy = fy + sMargin;
+
+      // 배경 + 프레임
+      highCtx.fillStyle = "#ffffff";
+      highCtx.fillRect(0, 0, highCanvas.width, highCanvas.height);
+
+      highCtx.save();
+      highCtx.beginPath();
+      highCtx.roundRect(fx, fy, fw, fh, radius);
+      highCtx.clip();
+      highCtx.drawImage(mainImg, fx, fy, fw, fh);
+
+      highCtx.beginPath();
+      highCtx.roundRect(sx, sy, sSize, sSize, 24);
+      highCtx.clip();
+      highCtx.drawImage(selfieImg, sx, sy, sSize, sSize);
+      highCtx.restore();
+
+      const link = document.createElement('a');
+      link.download = 'my-bereal-moment.png';
+      link.href = highCanvas.toDataURL('image/png');
+      link.click();
+    });
+
+    // Rounded rectangle support
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+      if (w < 2 * r) r = w / 2;
+      if (h < 2 * r) r = h / 2;
+      this.beginPath();
+      this.moveTo(x + r, y);
+      this.arcTo(x + w, y, x + w, y + h, r);
+      this.arcTo(x + w, y + h, x, y + h, r);
+      this.arcTo(x, y + h, x, y, r);
+      this.arcTo(x, y, x + w, y, r);
+      this.closePath();
+      return this;
+    }
+  </script>
+</body>
+</html>
