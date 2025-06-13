@@ -1,4 +1,158 @@
-    function drawCanvasPreview() {
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ViaReal - Layout Selector</title>
+  <style>
+    :root {
+      --primary: #6200ee;
+      --on-primary: #ffffff;
+      --surface: #ffffff;
+      --on-surface: #222;
+      --shadow: rgba(0, 0, 0, 0.15);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      color: var(--on-surface);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .card {
+      background-color: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 4px 16px var(--shadow);
+      padding: 24px;
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .upload-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+      width: 100%;
+    }
+
+    label {
+      font-size: 14px;
+      color: #555;
+    }
+
+    input[type="file"], select {
+      margin-top: 4px;
+      font-size: 14px;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      width: 100%;
+    }
+
+    canvas {
+      margin: 16px 0;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 375px;
+      height: auto;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: var(--on-primary);
+      border: none;
+      border-radius: 24px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #5300d6;
+    }
+
+    button:disabled {
+      background-color: #c3b8f0;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>My ViaReal Moment</h1>
+  <div class="card">
+    <div class="upload-group">
+      <label>Main Photo (Back Camera)
+        <input type="file" id="mainPhoto" accept="image/*">
+      </label>
+      <label>Lana's Photo (Front Camera)
+        <input type="file" id="selfiePhoto" accept="image/*">
+      </label>
+      <label>Layout
+        <select id="layout">
+          <option value="top-right">Top Right (default)</option>
+          <option value="bottom-left">Bottom Left</option>
+          <option value="center-overlay">Center Overlay</option>
+          <option value="split-horizontal">Split Horizontal</option>
+          <option value="split-vertical">Split Vertical</option>
+          <option value="side-by-side">Side by Side</option>
+        </select>
+      </label>
+    </div>
+    <canvas id="viarealCanvas" width="900" height="1200"></canvas>
+    <button id="downloadBtn" disabled>Download PNG (High Quality)</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('viarealCanvas');
+    const ctx = canvas.getContext('2d');
+    const mainInput = document.getElementById('mainPhoto');
+    const selfieInput = document.getElementById('selfiePhoto');
+    const layoutSelect = document.getElementById('layout');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let mainImg = null;
+    let selfieImg = null;
+
+    const canvasW = 900, canvasH = 1200;
+    const frameRadius = 16;
+    const selfieSize = 220;
+    const margin = 25;
+
+    function drawImageWithCover(ctx, img, dx, dy, dw, dh) {
+      const ir = img.width / img.height;
+      const fr = dw / dh;
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+
+      if (ir > fr) {
+        sw = sh * fr;
+        sx = (img.width - sw) / 2;
+      } else {
+        sh = sw / fr;
+        sy = (img.height - sh) / 2;
+      }
+
+      ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+        function drawCanvasPreview() {
       if (!mainImg || !selfieImg) return;
 
       const layout = layoutSelect.value;
