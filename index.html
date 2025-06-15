@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ViaReal - Layout Selector</title>
+  <title>ViaReal</title>
   <style>
     :root {
       --primary: #6200ee;
@@ -84,6 +84,7 @@
       cursor: pointer;
       transition: background-color 0.2s ease;
       box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+      margin: 6px 0;
     }
 
     button:hover:not(:disabled) {
@@ -94,21 +95,25 @@
       background-color: #c3b8f0;
       cursor: not-allowed;
     }
+
+    video {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <h1>My ViaReal Moment</h1>
   <div class="card">
     <div class="upload-group">
-      <label>Main Photo (Back Camera)
+      <label>Back Camera Photo
         <input type="file" id="mainPhoto" accept="image/*">
       </label>
-      <label>Lana's Photo (Front Camera)
+      <label>Front Camera Photo (Selfie)
         <input type="file" id="selfiePhoto" accept="image/*">
       </label>
       <label>Layout
         <select id="layout">
-          <option value="top-right">Top Right (default)</option>
+          <option value="top-right">Top Right (BeReal Style)</option>
           <option value="bottom-left">Bottom Left</option>
           <option value="center-overlay">Center Overlay</option>
           <option value="split-horizontal">Split Horizontal</option>
@@ -117,8 +122,10 @@
         </select>
       </label>
     </div>
+    <button id="captureBtn">📷</button>
     <canvas id="viarealCanvas" width="900" height="1200"></canvas>
     <button id="downloadBtn" disabled>Download PNG (High Quality)</button>
+    <video id="cameraStream" autoplay playsinline></video>
   </div>
 
   <script>
@@ -128,13 +135,16 @@
     const selfieInput = document.getElementById('selfiePhoto');
     const layoutSelect = document.getElementById('layout');
     const downloadBtn = document.getElementById('downloadBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    const video = document.getElementById('cameraStream');
 
     let mainImg = null;
     let selfieImg = null;
 
     const canvasW = 900, canvasH = 1200;
     const frameRadius = 16;
-    const selfieSize = 220;
+    const selfieW = 225; // 4:3 세로 비율
+    const selfieH = 300;
     const margin = 25;
 
     function drawImageWithCover(ctx, img, dx, dy, dw, dh) {
@@ -178,26 +188,26 @@
         ctx.clip();
         drawImageWithCover(ctx, mainImg, frameX, frameY, frameW, frameH);
 
-        let sx = frameX + frameW - selfieSize - margin;
+        let sx = frameX + frameW - selfieW - margin;
         let sy = frameY + margin;
         if (layout === 'bottom-left') {
           sx = frameX + margin;
-          sy = frameY + frameH - selfieSize - margin;
+          sy = frameY + frameH - selfieH - margin;
         } else if (layout === 'center-overlay') {
-          sx = frameX + (frameW - selfieSize) / 2;
-          sy = frameY + (frameH - selfieSize) / 2;
+          sx = frameX + (frameW - selfieW) / 2;
+          sy = frameY + (frameH - selfieH) / 2;
         }
 
         ctx.save();
         ctx.beginPath();
-        ctx.roundRect(sx - 3, sy - 3, selfieSize + 6, selfieSize + 6, 16);
-        ctx.fillStyle = "#000";
+        ctx.roundRect(sx - 5, sy - 5, selfieW + 10, selfieH + 10, 14);
+        ctx.fillStyle = "#fff";
         ctx.fill();
 
         ctx.beginPath();
-        ctx.roundRect(sx, sy, selfieSize, selfieSize, 12);
+        ctx.roundRect(sx, sy, selfieW, selfieH, 12);
         ctx.clip();
-        drawImageWithCover(ctx, selfieImg, sx, sy, selfieSize, selfieSize);
+        drawImageWithCover(ctx, selfieImg, sx, sy, selfieW, selfieH);
         ctx.restore();
       }
 
@@ -242,6 +252,10 @@
       highCanvas.height = canvasH * scale;
       const ctxH = highCanvas.getContext('2d');
 
+      const sW = selfieW * scale;
+      const sH = selfieH * scale;
+      const m = margin * scale;
+
       function drawHighResLayout() {
         const layout = layoutSelect.value;
         ctxH.fillStyle = "#fff";
@@ -259,8 +273,6 @@
           const fx = 37.5 * scale, fy = 50 * scale;
           const fw = 825 * scale, fh = 1100 * scale;
           const r = frameRadius * scale;
-          const sSize = selfieSize * scale;
-          const m = margin * scale;
 
           ctxH.save();
           ctxH.beginPath();
@@ -268,26 +280,26 @@
           ctxH.clip();
           drawImageWithCover(ctxH, mainImg, fx, fy, fw, fh);
 
-          let sx = fx + fw - sSize - m;
+          let sx = fx + fw - sW - m;
           let sy = fy + m;
           if (layout === 'bottom-left') {
             sx = fx + m;
-            sy = fy + fh - sSize - m;
+            sy = fy + fh - sH - m;
           } else if (layout === 'center-overlay') {
-            sx = fx + (fw - sSize) / 2;
-            sy = fy + (fh - sSize) / 2;
+            sx = fx + (fw - sW) / 2;
+            sy = fy + (fh - sH) / 2;
           }
 
           ctxH.save();
           ctxH.beginPath();
-          ctxH.roundRect(sx - 6, sy - 6, sSize + 12, sSize + 12, 24);
-          ctxH.fillStyle = "#000";
+          ctxH.roundRect(sx - 10, sy - 10, sW + 20, sH + 20, 24);
+          ctxH.fillStyle = "#fff";
           ctxH.fill();
 
           ctxH.beginPath();
-          ctxH.roundRect(sx, sy, sSize, sSize, 24);
+          ctxH.roundRect(sx, sy, sW, sH, 24);
           ctxH.clip();
-          drawImageWithCover(ctxH, selfieImg, sx, sy, sSize, sSize);
+          drawImageWithCover(ctxH, selfieImg, sx, sy, sW, sH);
           ctxH.restore();
         }
       }
@@ -297,6 +309,46 @@
       link.download = 'viareal-moment.png';
       link.href = highCanvas.toDataURL('image/png');
       link.click();
+    });
+
+    // 📷 동시 촬영
+    captureBtn.addEventListener('click', async () => {
+      try {
+        const backStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } });
+        video.srcObject = backStream;
+        await new Promise(r => setTimeout(r, 1000));
+        const backShot = document.createElement('canvas');
+        backShot.width = video.videoWidth;
+        backShot.height = video.videoHeight;
+        backShot.getContext('2d').drawImage(video, 0, 0);
+        backStream.getTracks().forEach(t => t.stop());
+        const main = new Image();
+        main.src = backShot.toDataURL();
+        main.onload = () => {
+          mainImg = main;
+          tryFront();
+        };
+
+        async function tryFront() {
+          const frontStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+          video.srcObject = frontStream;
+          await new Promise(r => setTimeout(r, 1000));
+          const frontShot = document.createElement('canvas');
+          frontShot.width = video.videoWidth;
+          frontShot.height = video.videoHeight;
+          frontShot.getContext('2d').drawImage(video, 0, 0);
+          frontStream.getTracks().forEach(t => t.stop());
+          const selfie = new Image();
+          selfie.src = frontShot.toDataURL();
+          selfie.onload = () => {
+            selfieImg = selfie;
+            drawCanvasPreview();
+          };
+        }
+      } catch (err) {
+        alert("당신의 기기는 고장난! 😑");
+        console.error(err);
+      }
     });
 
     CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
