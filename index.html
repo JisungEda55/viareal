@@ -123,7 +123,7 @@
         </select>
       </label>
     </div>
-    <button id="captureBtn">📷</button>
+    <button id="captureBtn">📷 동시에 촬영하기</button>
     <canvas id="viarealCanvas" width="900" height="1200"></canvas>
     <button id="downloadBtn" disabled>Download PNG (High Quality)</button>
     <video id="cameraStream" autoplay playsinline></video>
@@ -144,7 +144,7 @@
 
     const canvasW = 900, canvasH = 1200;
     const frameRadius = 16;
-    const selfieW = 225; // 4:3 세로 비율
+    const selfieW = 225;
     const selfieH = 300;
     const margin = 25;
 
@@ -202,7 +202,7 @@
         ctx.save();
         ctx.beginPath();
         ctx.roundRect(sx - 5, sy - 5, selfieW + 10, selfieH + 10, 14);
-        ctx.fillStyle = "#fff";
+        ctx.fillStyle = "#000"; // 검정 테두리
         ctx.fill();
 
         ctx.beginPath();
@@ -294,7 +294,7 @@
           ctxH.save();
           ctxH.beginPath();
           ctxH.roundRect(sx - 10, sy - 10, sW + 20, sH + 20, 24);
-          ctxH.fillStyle = "#fff";
+          ctxH.fillStyle = "#000"; // 검정 테두리
           ctxH.fill();
 
           ctxH.beginPath();
@@ -312,7 +312,7 @@
       link.click();
     });
 
-    // 📷 동시 촬영
+    // 📷 동시 촬영 기능
     captureBtn.addEventListener('click', async () => {
       try {
         const backStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } });
@@ -347,7 +347,7 @@
           };
         }
       } catch (err) {
-        alert("당신의 기기는 고장난! 😑");
+        alert("카메라 접근이 제한되었거나 기기가 전/후면 동시 사용을 지원하지 않습니다.");
         console.error(err);
       }
     });
